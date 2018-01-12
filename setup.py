@@ -19,11 +19,12 @@ if sys.platform == 'darwin':
         app = ['loxodo.py'],
         options = dict(
             py2app = dict(
+                arch = 'x86_64',
                 argv_emulation = True,
                 iconfile = 'resources/loxodo-icon.icns',
                 packages = ['src', 'wx'],
                 site_packages = True,
-                resources = ['resources', 'locale', 'LICENSE.txt', 'README.txt']
+                resources = ['resources', 'locale', 'LICENSE.txt', 'README.txt'],
             )
         )
     )
