@@ -17,20 +17,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
+import os
 import wx
 
+from . import LoadFrame
 from .wxlocale import setup_wx_locale
-from .loadframe import LoadFrame
-
 
 def main():
     app = wx.App(False)
     setup_wx_locale()
     mainframe = LoadFrame(None, -1, "")
+    mainframe.Show(1)
     app.SetTopWindow(mainframe)
-    mainframe.Show()
     app.MainLoop()
-
 
 main()
 

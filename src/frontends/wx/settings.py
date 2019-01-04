@@ -51,12 +51,11 @@ class Settings(wx.Dialog):
 
         _sz_main.Add(_sz_fields, 1, wx.EXPAND | wx.GROW)
 
-        try:
-            # Throws exception of pwgen is not installed
-            subprocess.Popen(['pwgen'], stdout=subprocess.PIPE).communicate()
-            self._cb_pwgen = self._add_a_checkbox(_sz_fields,_("Use pwgen to generate passwords") + ":")
-        except OSError:
-            self._cb_pwgen = None
+        self._cb_pwgen = self._add_a_checkbox(_sz_fields,_("Use 'pwgen' to generate passwords") + ":")
+        if not config.found_pwgen:
+            self._cb_pwgen.Disable()
+            tooltip = wx.ToolTip(_("Can't locate 'pwgen' in PATH."))
+            self._cb_pwgen.SetToolTip(tooltip)
 
         self._cb_reduction = self._add_a_checkbox(_sz_fields,_("Avoid easy to mistake chars") + ":")
 
@@ -93,10 +92,17 @@ class Settings(wx.Dialog):
         self.update_fields()
 
     def _add_a_checkbox(self, parent_sizer, label, extrastyle=0):
-        _label = wx.StaticText(self.panel, -1, label, style=wx.ALIGN_RIGHT)
-        parent_sizer.Add(_label, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5)
-        control =        wx.CheckBox(self.panel,-1)
-        parent_sizer.Add(control, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL|wx.EXPAND, 5)
+        _label = wx.StaticText(self.panel,-1, label, style=wx.ALIGN_RIGHT)
+        parent_sizer.Add(
+            _label, 0, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL,
+            border=5
+        )
+        control = wx.CheckBox(self.panel, -1)
+        parent_sizer.Add(
+            control, 1,
+            flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL|wx.EXPAND,
+            border=5
+        )
         return control
 
     def _add_a_spincontrol(self, parent_sizer, label, min, max, extrastyle=0):

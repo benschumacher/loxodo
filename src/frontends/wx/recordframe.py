@@ -198,13 +198,18 @@ class RecordFrame(wx.Dialog):
             options = '-cn'
             if allow_reduction:
                 options += 'B'
-            stdout, stderr = subprocess.Popen(
-                    ['pwgen', options, str(pwd_length), '1'],
-                    stdout=subprocess.PIPE).communicate()
-            pwd = stdout.strip()
-            assert len(pwd) == pwd_length
-            return pwd
+            try:
+                os.environ['PATH'] = os.environ['PATH'] + ':/usr/local/bin'
+                stdout, _ = subprocess.Popen(
+                        ['pwgen', options, str(pwd_length), '1'],
+                        stdout=subprocess.PIPE).communicate()
 
+                pwd = stdout.strip()
+                assert len(pwd) == pwd_length
+                return pwd
+
+            except OSError as err:
+                pass
 
         # remove some easy-to-mistake characters
         if allow_reduction:

@@ -19,23 +19,23 @@
 
 import os
 import wx
+
 from wx.lib import filebrowsebutton
 
+import vaultframe
+from . import LoxodoFrame
 from .wxlocale import _
-from .vaultframe import VaultFrame
 from ...vault import Vault
 from ...config import config
 from .paths import get_resourcedir
 
-
-class LoadFrame(wx.Frame):
+class LoadFrame(LoxodoFrame):
     """
     Displays the "welcome" dialog which lets the user open a Vault.
     """
     def __init__(self, *args, **kwds):
-        # begin wxGlade: ChooseVaultFrame.__init__
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, **kwds)
+        super(self.__class__, self).__init__(*args, **kwds)
+
         self.panel_1 = wx.Panel(self, -1)
         self._lb_passwd = wx.StaticText(self.panel_1, -1, _("Password") + ":")
         self._tc_passwd = wx.TextCtrl(self.panel_1, -1, "", style=wx.TE_PASSWORD)
@@ -109,15 +109,15 @@ class LoadFrame(wx.Frame):
     def _on_open(self, dummy):
         try:
             password = self._tc_passwd.GetValue().encode('latin1', 'replace')
-            vaultframe = VaultFrame(None, -1, "")
-            vaultframe.open_vault(self._fb_filename.GetValue(), password)
+            vf = vaultframe.VaultFrame(None, -1, "")
+            vf.open_vault(self._fb_filename.GetValue(), password)
             config.recentvaults.insert(0, self._fb_filename.GetValue())
             config.save()
             self.Hide()
-            vaultframe.Show()
+            vf.Show()
             self.Destroy()
         except Vault.BadPasswordError:
-            vaultframe.Destroy()
+            vf.Destroy()
             dial = wx.MessageDialog(self,
                                     _('The given password does not match the Vault'),
                                     _('Bad Password'),
@@ -128,7 +128,7 @@ class LoadFrame(wx.Frame):
             self._tc_passwd.SetFocus()
             self._tc_passwd.SelectAll()
         except Vault.VaultVersionError:
-            vaultframe.Destroy()
+            vf.Destroy()
             dial = wx.MessageDialog(self,
                                     _('This is not a PasswordSafe V3 Vault'),
                                     _('Bad Vault'),
@@ -137,7 +137,7 @@ class LoadFrame(wx.Frame):
             dial.ShowModal()
             dial.Destroy()
         except Vault.VaultFormatError:
-            vaultframe.Destroy()
+            vf.Destroy()
             dial = wx.MessageDialog(self,
                                     _('Vault integrity check failed'),
                                     _('Bad Vault'),

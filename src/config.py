@@ -19,6 +19,7 @@
 
 import os
 import platform
+import subprocess
 from ConfigParser import SafeConfigParser
 
 
@@ -36,7 +37,9 @@ class Config(object):
         self.reduction = False
         self.search_notes = False
         self.search_passwd = False
+        self.pwgen_path = None
         self.use_pwgen = False
+        self.found_pwgen = False
         self.alphabet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
         self.tray_icon = False
 
@@ -76,8 +79,31 @@ class Config(object):
             if self._parser.get("base", "search_passwd") == "True":
                 self.search_passwd = True
 
+        if self._parser.has_option("base", "pwgen_path"):
+            self.pwgen_path = self._parser.get("base", "pwgen_path")
+
         if self._parser.has_option("base", "use_pwgen"):
             if self._parser.get("base", "use_pwgen") == "True":
+                try:
+                    path = os.environ['PATH']
+                    if ":" in path:
+                        path = ":".join([path, "/usr/local/bin"])
+
+                    args = ['pwgen', '-h']
+                    if self.pwgen_path:
+                        args = [self.pwgen_path] + args
+
+                    pwgen = subprocess.Popen(
+                        args, env={'PATH': path}, stdout=subprocess.PIPE
+                    )
+                    # Throws exception of pwgen is not installed
+                    _, stderr = pwgen.communicate()
+                    self.found_pwgen = True
+                    print("%s: %s\n" % (pwgen, stderr))
+
+                except OSError as err:
+                    print("%s\n" % err)
+
                 self.use_pwgen = True
 
         if not os.path.exists(self._fname):

@@ -5,7 +5,7 @@ locale:
 
 app:
 	rm -fr build dist
-	python setup.py py2app
+	/usr/bin/python setup.py py2app
 
 exe:
 	rm -fr build dist

@@ -20,17 +20,17 @@
 import os
 import wx
 
+from . import LoxodoFrame
+
 from .wxlocale import _
 from ...vault import Vault
 from ...config import config
 from .recordframe import RecordFrame
 from .mergeframe import MergeFrame
-from .settings import Settings
+from .paths import get_resourcedir
 from .taskbaricon import LoxodoTaskBarIcon
 
-from .paths import get_resourcedir
-
-class VaultFrame(wx.Frame):
+class VaultFrame(LoxodoFrame):
     """
     Displays (and lets the user edit) the Vault.
     """
@@ -139,13 +139,10 @@ class VaultFrame(wx.Frame):
 
 
     def __init__(self, *args, **kwds):
-        kwds["style"] = wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, **kwds)
+        super(self.__class__, self).__init__(*args, **kwds)
 
         wx.EVT_CLOSE(self, self._on_frame_close)
-
         self.panel = wx.Panel(self, -1)
-
         self._searchbox = wx.SearchCtrl(self.panel, size=(200, -1))
         self._searchbox.ShowCancelButton(True)
         self.list = self.VaultListCtrl(self.panel, -1, size=(640, 240), style=wx.LC_REPORT|wx.SUNKEN_BORDER|wx.LC_VIRTUAL|wx.LC_EDIT_LABELS)
@@ -156,24 +153,17 @@ class VaultFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar(1, wx.ST_SIZEGRIP)
 
         # Set up menus
-        filemenu = wx.Menu()
+        filemenu = self.GetFileMenu()
         temp_id = wx.NewId()
         filemenu.Append(temp_id, _("Change &Password") + "...")
         wx.EVT_MENU(self, temp_id, self._on_change_password)
         temp_id = wx.NewId()
         filemenu.Append(temp_id, _("&Merge Records from") + "...")
         wx.EVT_MENU(self, temp_id, self._on_merge_vault)
-        filemenu.Append(wx.ID_ABOUT, _("&About"))
-        wx.EVT_MENU(self, wx.ID_ABOUT, self._on_about)
-        filemenu.Append(wx.ID_PREFERENCES, _("&Settings"))
-        wx.EVT_MENU(self, wx.ID_PREFERENCES, self._on_settings)
-        filemenu.AppendSeparator()
-        filemenu.Append(wx.ID_EXIT, _("E&xit"))
-        wx.EVT_MENU(self, wx.ID_EXIT, self._on_exit)
         self._recordmenu = self._create_recordmenu()
         self._recordmenu_popup = self._create_recordmenu()
-        menu_bar = wx.MenuBar()
-        menu_bar.Append(filemenu, _("&Vault"))
+
+        menu_bar = self.GetMenuBar()
         menu_bar.Append(self._recordmenu, _("&Record"))
         self.SetMenuBar(menu_bar)
 
@@ -228,7 +218,7 @@ class VaultFrame(wx.Frame):
             https://forums.wxwidgets.org/viewtopic.php?t=39069
         """
         recordmenu = wx.Menu()
-        recordmenu.Append(wx.ID_ADD, _("&Add\tCtrl+A"))
+        recordmenu.Append(wx.ID_ADD, _("&Add\tCtrl+N"))
         wx.EVT_MENU(self, wx.ID_ADD, self._on_add)
         recordmenu.Append(wx.ID_DELETE, _("&Delete\tCtrl+Back"))
         wx.EVT_MENU(self, wx.ID_DELETE, self._on_delete)
@@ -375,54 +365,11 @@ class VaultFrame(wx.Frame):
     def _on_list_contextmenu(self, dummy):
         self.PopupMenu(self._recordmenu_popup)
 
-    def _on_about(self, dummy):
-        """
-        Event handler: Fires when user chooses this menu item.
-        """
-        gpl_v2 = """This program is free software; you can redistribute it and/or modify it under the
-terms of the GNU General Public License as published by the Free Software Foundation;
-either version 2 of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with this program;
-if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA."""
-
-        developers = (
-                      "Christoph Sommer",
-                      "Bjorn Edstrom (Python Twofish)",
-                      "Brian Gladman (C Twofish)",
-                      "Tim Kuhlman",
-                      "David Eckhoff",
-                      "Nick Verbeck"
-                      )
-
-        about = wx.AboutDialogInfo()
-        about.SetIcon(wx.Icon(os.path.join(get_resourcedir(), "loxodo-icon.png"), wx.BITMAP_TYPE_PNG, 128, 128))
-        about.SetName("Loxodo")
-        about.SetVersion("0.0-git")
-        about.SetCopyright("Copyright (C) 2008 Christoph Sommer <mail@christoph-sommer.de>")
-        about.SetWebSite("http://www.christoph-sommer.de/loxodo")
-        about.SetLicense(gpl_v2)
-        about.SetDevelopers(developers)
-        wx.AboutBox(about)
-
-    def _on_settings(self, dummy):
-        """
-        Event handler: Fires when user chooses this menu item.
-        """
-        settings = Settings(self)
-        settings.ShowModal()
-        settings.Destroy()
+    def _on_close_settings(self):
         self.list.update_fields()
 
     def _on_change_password(self, dummy):
-
         # FIXME: choose new SALT, B1-B4, IV values on password change? Conflicting Specs!
-
         dial = wx.PasswordEntryDialog(self,
                                 _("New password"),
                                 _("Change Vault Password")
@@ -537,12 +484,6 @@ if not, write to the Free Software Foundation, Inc.,
             else:
                 self.vault.records.append(newrecord)
         self.mark_modified()
-
-    def _on_exit(self, dummy):
-        """
-        Event handler: Fires when user chooses this menu item.
-        """
-        self.Close(True)  # Close the frame.
 
     def _on_edit(self, dummy):
         """
